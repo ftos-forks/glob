@@ -1,529 +1,22 @@
 require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 3109:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+/***/ 7773:
+/***/ ((module) => {
 
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.run = void 0;
-const core = __importStar(__nccwpck_require__(2186));
-const glob = __importStar(__nccwpck_require__(8090));
-const fs_1 = __nccwpck_require__(7147);
-const path = __importStar(__nccwpck_require__(1017));
-const utils_1 = __nccwpck_require__(918);
-const DEFAULT_EXCLUDED_FILES = [
-    '!.git/**',
-    '!**/node_modules/**',
-    '!node_modules/**'
-];
-function run() {
-    return __awaiter(this, void 0, void 0, function* () {
-        const files = core.getInput('files', { required: false });
-        const filesSeparator = core.getInput('files-separator', {
-            required: false,
-            trimWhitespace: false
-        });
-        const excludedFiles = core.getInput('excluded-files', { required: false });
-        const excludedFilesSeparator = core.getInput('excluded-files-separator', {
-            required: false,
-            trimWhitespace: false
-        });
-        const filesFromSourceFile = core.getInput('files-from-source-file', {
-            required: false
-        });
-        const filesFromSourceFileSeparator = core.getInput('files-from-source-file-separator', { required: false, trimWhitespace: false });
-        const excludedFilesFromSourceFile = core.getInput('excluded-files-from-source-file', { required: false });
-        const excludedFilesFromSourceFileSeparator = core.getInput('excluded-files-from-source-file-separator', { required: false, trimWhitespace: false });
-        const followSymbolicLinks = core.getBooleanInput('follow-symbolic-links', {
-            required: false
-        });
-        const matchDirectories = core.getBooleanInput('match-directories', {
-            required: false
-        });
-        const matchGitignoreFiles = core.getBooleanInput('match-gitignore-files', {
-            required: true
-        });
-        const separator = core.getInput('separator', {
-            required: true,
-            trimWhitespace: false
-        });
-        const diff = core.getInput('diff', { required: false });
-        const escapePaths = core.getBooleanInput('escape-paths', { required: false });
-        const stripTopLevelDir = core.getBooleanInput('strip-top-level-dir', {
-            required: true
-        });
-        const includeDeletedFiles = core.getBooleanInput('include-deleted-files', {
-            required: true
-        });
-        const baseRef = core.getInput('base-ref', { required: false });
-        const headRepoFork = core.getInput('head-repo-fork', { required: false }) === 'true';
-        const sha = core.getInput('sha', { required: includeDeletedFiles });
-        const baseSha = core.getInput('base-sha', { required: includeDeletedFiles });
-        const workingDirectory = path.resolve(process.env.GITHUB_WORKSPACE || process.cwd(), core.getInput('working-directory', { required: true }));
-        const gitignorePath = path.join(workingDirectory, '.gitignore');
-        let filePatterns = files
-            .split(filesSeparator)
-            .filter(Boolean)
-            .map(p => (p.endsWith(path.sep) ? `${p}**` : p))
-            .join('\n');
-        core.debug(`file patterns: ${filePatterns}`);
-        let diffType = diff;
-        if (!diffType) {
-            diffType = !baseRef || headRepoFork ? '..' : '...';
-        }
-        if (excludedFiles !== '') {
-            const excludedFilePatterns = excludedFiles
-                .split(excludedFilesSeparator)
-                .filter(Boolean)
-                .map(p => {
-                p = p.startsWith('!') ? p : `!${p}`;
-                if (p.endsWith(path.sep)) {
-                    p = `${p}**`;
-                }
-                return p;
-            })
-                .join('\n');
-            core.debug(`excluded file patterns: ${excludedFilePatterns}`);
-            if (!files) {
-                filePatterns += `\n**\n${excludedFilePatterns}`;
-            }
-            else {
-                filePatterns += `\n${excludedFilePatterns}`;
-            }
-        }
-        if (filesFromSourceFile !== '') {
-            const inputFilesFromSourceFile = filesFromSourceFile
-                .split(filesFromSourceFileSeparator)
-                .filter(p => p !== '')
-                .map(p => path.join(workingDirectory, p));
-            const filesFromSourceFiles = (yield (0, utils_1.getFilesFromSourceFile)({ filePaths: inputFilesFromSourceFile })).join('\n');
-            core.debug(`files from source files patterns: ${filesFromSourceFiles}`);
-            filePatterns += `\n${filesFromSourceFiles}`;
-        }
-        if (excludedFilesFromSourceFile !== '') {
-            const inputExcludedFilesFromSourceFile = excludedFilesFromSourceFile
-                .split(excludedFilesFromSourceFileSeparator)
-                .filter(p => p !== '')
-                .map(p => path.join(workingDirectory, p));
-            const excludedFilesFromSourceFiles = (yield (0, utils_1.getFilesFromSourceFile)({
-                filePaths: inputExcludedFilesFromSourceFile,
-                excludedFiles: true
-            })).join('\n');
-            core.debug(`excluded files from source files patterns: ${excludedFilesFromSourceFiles}`);
-            if (!files && !filesFromSourceFile) {
-                filePatterns += `\n**\n${excludedFilesFromSourceFiles}`;
-            }
-            else {
-                filePatterns += `\n${excludedFilesFromSourceFiles}`;
-            }
-        }
-        filePatterns += `\n${DEFAULT_EXCLUDED_FILES.join('\n')}`;
-        filePatterns = [...new Set(filePatterns.split('\n').filter(p => p !== ''))]
-            .map(pt => {
-            const parts = pt.split(path.sep);
-            let absolutePath;
-            let isExcluded = false;
-            if (parts[0].startsWith('!')) {
-                absolutePath = path.resolve(path.join(workingDirectory, parts[0].slice(1)));
-                isExcluded = true;
-            }
-            else {
-                absolutePath = path.resolve(path.join(workingDirectory, parts[0]));
-            }
-            const p = path.join(absolutePath, ...parts.slice(1));
-            return isExcluded ? `!${p}` : p;
-        })
-            .join('\n');
-        let allInclusive = false;
-        if (filePatterns.split('\n').filter(p => !p.startsWith('!')).length === 0) {
-            allInclusive = true;
-            filePatterns = `**\n${filePatterns}`;
-        }
-        core.debug(`file patterns: ${filePatterns}`);
-        const globOptions = {
-            followSymbolicLinks,
-            matchDirectories
-        };
-        const globber = yield glob.create(filePatterns, globOptions);
-        // @ts-ignore
-        globber.patterns.map(pattern => {
-            pattern.minimatch.options.nobrace = false;
-            pattern.minimatch.make();
-            return pattern;
-        });
-        let paths = new Set(yield globber.glob());
-        if (yield (0, utils_1.exists)(gitignorePath)) {
-            const gitignoreFilePatterns = (yield (0, utils_1.getFilesFromSourceFile)({
-                filePaths: [gitignorePath]
-            }))
-                .concat(DEFAULT_EXCLUDED_FILES)
-                .filter(p => !!p)
-                .map(pt => {
-                const negated = pt.startsWith('!');
-                const parts = pt.replace(/^!/, '').split(path.sep);
-                const absolutePath = path.resolve(path.join(workingDirectory, parts[0]));
-                return `${negated ? '!' : ''}${path.join(absolutePath, ...parts.slice(1))}`;
-            })
-                .join('\n');
-            core.debug(`gitignore file patterns: ${gitignoreFilePatterns}`);
-            const gitIgnoreGlobber = yield glob.create(gitignoreFilePatterns, globOptions);
-            const gitignoreMatchingFiles = new Set(yield gitIgnoreGlobber.glob());
-            if (allInclusive || !matchGitignoreFiles) {
-                paths = new Set([...paths].filter(p => !gitignoreMatchingFiles.has(p)));
-            }
-            else if (matchGitignoreFiles) {
-                const excludedPaths = new Set([...gitignoreMatchingFiles].filter(gp => !paths.has(gp)));
-                paths = new Set([...paths].filter(p => !excludedPaths.has(p)));
-            }
-        }
-        if (includeDeletedFiles) {
-            paths = new Set([
-                ...paths,
-                ...(yield (0, utils_1.getDeletedFiles)({
-                    filePatterns,
-                    baseSha,
-                    sha,
-                    cwd: workingDirectory,
-                    diff: diffType
-                }))
-            ]);
-        }
-        if (stripTopLevelDir) {
-            paths = new Set([...paths]
-                .map((p) => (0, utils_1.normalizeSeparators)(p
-                .replace(workingDirectory + path.sep, '')
-                .replace(workingDirectory, '')))
-                .filter((p) => !!p));
-        }
-        if (escapePaths) {
-            paths = new Set([...paths].map(p => (0, utils_1.escapeString)(p)));
-        }
-        const pathsOutput = [...paths].join(separator);
-        const hasCustomPatterns = files !== '' ||
-            filesFromSourceFile !== '' ||
-            excludedFiles !== '' ||
-            excludedFilesFromSourceFile !== '';
-        if (!pathsOutput && hasCustomPatterns) {
-            core.warning('No paths found using the specified patterns');
-        }
-        const pathsOutputFile = yield (0, utils_1.tempfile)('.txt');
-        yield fs_1.promises.writeFile(pathsOutputFile, pathsOutput, { flag: 'w' });
-        core.setOutput('paths-output-file', pathsOutputFile);
-        core.saveState('paths-output-file', pathsOutputFile);
-        core.info(`Successfully created paths-output-file: ${pathsOutputFile}`);
-        core.setOutput('paths', pathsOutput);
-        core.setOutput('has-custom-patterns', hasCustomPatterns);
-    });
+function webpackEmptyAsyncContext(req) {
+	// Here Promise.resolve().then() is used instead of new Promise() to prevent
+	// uncaught exception popping up in devtools
+	return Promise.resolve().then(() => {
+		var e = new Error("Cannot find module '" + req + "'");
+		e.code = 'MODULE_NOT_FOUND';
+		throw e;
+	});
 }
-exports.run = run;
-/* istanbul ignore if */
-if (!process.env.TESTING) {
-    // eslint-disable-next-line github/no-then
-    run().catch(e => {
-        core.setFailed(e.message || e);
-    });
-}
-
-
-/***/ }),
-
-/***/ 918:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __asyncValues = (this && this.__asyncValues) || function (o) {
-    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-    var m = o[Symbol.asyncIterator], i;
-    return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
-    function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
-    function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
-};
-var __await = (this && this.__await) || function (v) { return this instanceof __await ? (this.v = v, this) : new __await(v); }
-var __asyncGenerator = (this && this.__asyncGenerator) || function (thisArg, _arguments, generator) {
-    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-    var g = generator.apply(thisArg, _arguments || []), i, q = [];
-    return i = {}, verb("next"), verb("throw"), verb("return", awaitReturn), i[Symbol.asyncIterator] = function () { return this; }, i;
-    function awaitReturn(f) { return function (v) { return Promise.resolve(v).then(f, reject); }; }
-    function verb(n, f) { if (g[n]) { i[n] = function (v) { return new Promise(function (a, b) { q.push([n, v, a, b]) > 1 || resume(n, v); }); }; if (f) i[n] = f(i[n]); } }
-    function resume(n, v) { try { step(g[n](v)); } catch (e) { settle(q[0][3], e); } }
-    function step(r) { r.value instanceof __await ? Promise.resolve(r.value.v).then(fulfill, reject) : settle(q[0][2], r); }
-    function fulfill(value) { resume("next", value); }
-    function reject(value) { resume("throw", value); }
-    function settle(f, v) { if (f(v), q.shift(), q.length) resume(q[0][0], q[0][1]); }
-};
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.exists = exports.escapeString = exports.tempfile = exports.getFilesFromSourceFile = exports.getDeletedFiles = exports.getPatterns = exports.deletedGitFiles = exports.normalizeSeparators = void 0;
-/*global AsyncIterableIterator*/
-const fs_1 = __nccwpck_require__(7147);
-const os_1 = __nccwpck_require__(2037);
-const path_1 = __importDefault(__nccwpck_require__(1017));
-const readline_1 = __nccwpck_require__(4521);
-const core = __importStar(__nccwpck_require__(2186));
-const exec = __importStar(__nccwpck_require__(1514));
-const patternHelper = __importStar(__nccwpck_require__(9005));
-const internal_pattern_1 = __nccwpck_require__(4536);
-const uuid_1 = __nccwpck_require__(5840);
-/**
- * Converts windows path `\` to `/`
- */
-function normalizeSeparators(filePath) {
-    const IS_WINDOWS = process.platform === 'win32';
-    filePath = filePath || '';
-    // Windows
-    if (IS_WINDOWS) {
-        // Convert slashes on Windows
-        filePath = filePath.replace(/\\/g, '/');
-    }
-    return filePath;
-}
-exports.normalizeSeparators = normalizeSeparators;
-/**
- * Retrieve all deleted files
- */
-function deletedGitFiles(_a) {
-    return __awaiter(this, arguments, void 0, function* ({ baseSha, sha, cwd, diff }) {
-        const { exitCode: topDirExitCode, stdout: topDirStdout, stderr: topDirStderr } = yield exec.getExecOutput('git', ['rev-parse', '--show-toplevel'], {
-            cwd
-        });
-        /* istanbul ignore if */
-        if (topDirStderr || topDirExitCode !== 0) {
-            throw new Error(topDirStderr || 'An unexpected error occurred');
-        }
-        const topLevelDir = topDirStdout.trim();
-        core.debug(`top level directory: ${topLevelDir}`);
-        const { exitCode, stdout, stderr } = yield exec.getExecOutput('git', ['diff', '--diff-filter=D', '--name-only', `${baseSha}${diff}${sha}`], { cwd });
-        core.debug(`git diff exited with: ${exitCode}`);
-        /* istanbul ignore if */
-        if (exitCode !== 0) {
-            throw new Error(stderr || 'An unexpected error occurred');
-        }
-        else if (stderr) {
-            /* istanbul ignore next */
-            core.warning(stderr);
-        }
-        const deletedFiles = stdout
-            .split('\n')
-            .map(p => p.trim())
-            .filter(p => p !== '')
-            .map(p => path_1.default.join(topLevelDir, p));
-        core.debug(`deleted files: ${deletedFiles}`);
-        return deletedFiles;
-    });
-}
-exports.deletedGitFiles = deletedGitFiles;
-function getPatterns(filePatterns) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const IS_WINDOWS = process.platform === 'win32';
-        const patterns = [];
-        if (IS_WINDOWS) {
-            filePatterns = filePatterns.replace(/\r\n/g, '\n');
-            filePatterns = filePatterns.replace(/\r/g, '\n');
-        }
-        const lines = filePatterns.split('\n').map(filePattern => filePattern.trim());
-        for (let line of lines) {
-            // Empty or comment
-            if (!(!line || line.startsWith('#'))) {
-                line = IS_WINDOWS ? line.replace(/\\/g, '/') : line;
-                const pattern = new internal_pattern_1.Pattern(line);
-                // @ts-ignore
-                pattern.minimatch.options.nobrace = false;
-                // @ts-ignore
-                pattern.minimatch.make();
-                patterns.push(pattern);
-                if (pattern.trailingSeparator ||
-                    pattern.segments[pattern.segments.length - 1] !== '**') {
-                    patterns.push(new internal_pattern_1.Pattern(pattern.negate, true, pattern.segments.concat('**')));
-                }
-            }
-        }
-        return patterns;
-    });
-}
-exports.getPatterns = getPatterns;
-function getDeletedFiles(_a) {
-    return __awaiter(this, arguments, void 0, function* ({ filePatterns, baseSha, sha, cwd, diff }) {
-        const patterns = yield getPatterns(filePatterns);
-        const deletedFiles = [];
-        for (const filePath of yield deletedGitFiles({ baseSha, sha, cwd, diff })) {
-            const match = patternHelper.match(patterns, filePath);
-            if (match) {
-                deletedFiles.push(filePath);
-            }
-        }
-        return deletedFiles;
-    });
-}
-exports.getDeletedFiles = getDeletedFiles;
-/**
- * Generator for retrieving all file contents
- */
-function lineOfFileGenerator(_a) {
-    return __asyncGenerator(this, arguments, function* lineOfFileGenerator_1({ filePath, excludedFiles }) {
-        var _b, e_1, _c, _d;
-        const fileStream = (0, fs_1.createReadStream)(filePath);
-        /* istanbul ignore next */
-        fileStream.on('error', error => {
-            throw error;
-        });
-        const rl = (0, readline_1.createInterface)({
-            input: fileStream,
-            crlfDelay: Infinity
-        });
-        try {
-            for (var _e = true, rl_1 = __asyncValues(rl), rl_1_1; rl_1_1 = yield __await(rl_1.next()), _b = rl_1_1.done, !_b; _e = true) {
-                _d = rl_1_1.value;
-                _e = false;
-                let line = _d;
-                if (!line.startsWith('#') && line !== '') {
-                    if (excludedFiles) {
-                        line = line.startsWith('!') ? line : `!${line}`;
-                        if (line.endsWith(path_1.default.sep)) {
-                            line = `${line}**`;
-                        }
-                        yield yield __await(line);
-                    }
-                    else {
-                        line = line.endsWith(path_1.default.sep) ? `${line}**` : line;
-                        yield yield __await(line);
-                    }
-                }
-            }
-        }
-        catch (e_1_1) { e_1 = { error: e_1_1 }; }
-        finally {
-            try {
-                if (!_e && !_b && (_c = rl_1.return)) yield __await(_c.call(rl_1));
-            }
-            finally { if (e_1) throw e_1.error; }
-        }
-    });
-}
-function getFilesFromSourceFile(_a) {
-    return __awaiter(this, arguments, void 0, function* ({ filePaths, excludedFiles = false }) {
-        var _b, e_2, _c, _d;
-        const lines = [];
-        for (const filePath of filePaths) {
-            try {
-                for (var _e = true, _f = (e_2 = void 0, __asyncValues(lineOfFileGenerator({ filePath, excludedFiles }))), _g; _g = yield _f.next(), _b = _g.done, !_b; _e = true) {
-                    _d = _g.value;
-                    _e = false;
-                    const line = _d;
-                    lines.push(line);
-                }
-            }
-            catch (e_2_1) { e_2 = { error: e_2_1 }; }
-            finally {
-                try {
-                    if (!_e && !_b && (_c = _f.return)) yield _c.call(_f);
-                }
-                finally { if (e_2) throw e_2.error; }
-            }
-        }
-        return lines;
-    });
-}
-exports.getFilesFromSourceFile = getFilesFromSourceFile;
-function tempfile() {
-    return __awaiter(this, arguments, void 0, function* (extension = '') {
-        const tempDirectory = yield fs_1.promises.realpath((0, os_1.tmpdir)());
-        return path_1.default.join(tempDirectory, `${(0, uuid_1.v4)()}${extension}`);
-    });
-}
-exports.tempfile = tempfile;
-/**
- * Escapes special characters in a string for the bash shell.
- *
- * @param value - The string to be escaped.
- * @returns The escaped string.
- */
-function escapeString(value) {
-    // escape special characters for bash shell
-    return value.replace(/[^\x20-\x7E]|[:*?<>|;`$()&!]|\[|]/g, '\\$&');
-}
-exports.escapeString = escapeString;
-function exists(filePath) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            yield fs_1.promises.access(filePath);
-            return true;
-        }
-        catch (_a) {
-            return false;
-        }
-    });
-}
-exports.exists = exists;
-
+webpackEmptyAsyncContext.keys = () => ([]);
+webpackEmptyAsyncContext.resolve = webpackEmptyAsyncContext;
+webpackEmptyAsyncContext.id = 7773;
+module.exports = webpackEmptyAsyncContext;
 
 /***/ }),
 
@@ -29121,24 +28614,25 @@ module.exports = {
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
+var __webpack_unused_export__;
 
 
-Object.defineProperty(exports, "__esModule", ({
+__webpack_unused_export__ = ({
   value: true
-}));
-Object.defineProperty(exports, "NIL", ({
+});
+Object.defineProperty(exports, "zR", ({
   enumerable: true,
   get: function () {
     return _nil.default;
   }
 }));
-Object.defineProperty(exports, "parse", ({
+Object.defineProperty(exports, "Qc", ({
   enumerable: true,
   get: function () {
     return _parse.default;
   }
 }));
-Object.defineProperty(exports, "stringify", ({
+Object.defineProperty(exports, "Pz", ({
   enumerable: true,
   get: function () {
     return _stringify.default;
@@ -29168,13 +28662,13 @@ Object.defineProperty(exports, "v5", ({
     return _v4.default;
   }
 }));
-Object.defineProperty(exports, "validate", ({
+Object.defineProperty(exports, "Gu", ({
   enumerable: true,
   get: function () {
     return _validate.default;
   }
 }));
-Object.defineProperty(exports, "version", ({
+Object.defineProperty(exports, "i8", ({
   enumerable: true,
   get: function () {
     return _version.default;
@@ -29955,14 +29449,6 @@ module.exports = require("perf_hooks");
 
 "use strict";
 module.exports = require("querystring");
-
-/***/ }),
-
-/***/ 4521:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("readline");
 
 /***/ }),
 
@@ -31704,18 +31190,508 @@ module.exports = parseParams
 /******/ 	}
 /******/ 	
 /************************************************************************/
+/******/ 	/* webpack/runtime/compat get default export */
+/******/ 	(() => {
+/******/ 		// getDefaultExport function for compatibility with non-harmony modules
+/******/ 		__nccwpck_require__.n = (module) => {
+/******/ 			var getter = module && module.__esModule ?
+/******/ 				() => (module['default']) :
+/******/ 				() => (module);
+/******/ 			__nccwpck_require__.d(getter, { a: getter });
+/******/ 			return getter;
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/define property getters */
+/******/ 	(() => {
+/******/ 		// define getter functions for harmony exports
+/******/ 		__nccwpck_require__.d = (exports, definition) => {
+/******/ 			for(var key in definition) {
+/******/ 				if(__nccwpck_require__.o(definition, key) && !__nccwpck_require__.o(exports, key)) {
+/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 				}
+/******/ 			}
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
+/******/ 	(() => {
+/******/ 		__nccwpck_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/make namespace object */
+/******/ 	(() => {
+/******/ 		// define __esModule on exports
+/******/ 		__nccwpck_require__.r = (exports) => {
+/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 			}
+/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 		};
+/******/ 	})();
+/******/ 	
 /******/ 	/* webpack/runtime/compat */
 /******/ 	
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
 /******/ 	
 /************************************************************************/
-/******/ 	
-/******/ 	// startup
-/******/ 	// Load entry module and return exports
-/******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __nccwpck_require__(3109);
-/******/ 	module.exports = __webpack_exports__;
-/******/ 	
+var __webpack_exports__ = {};
+// This entry need to be wrapped in an IIFE because it need to be in strict mode.
+(() => {
+"use strict";
+// ESM COMPAT FLAG
+__nccwpck_require__.r(__webpack_exports__);
+
+// EXPORTS
+__nccwpck_require__.d(__webpack_exports__, {
+  "run": () => (/* binding */ run)
+});
+
+// EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
+var core = __nccwpck_require__(2186);
+// EXTERNAL MODULE: ./node_modules/@actions/glob/lib/glob.js
+var glob = __nccwpck_require__(8090);
+// EXTERNAL MODULE: external "fs"
+var external_fs_ = __nccwpck_require__(7147);
+// EXTERNAL MODULE: external "path"
+var external_path_ = __nccwpck_require__(1017);
+var external_path_default = /*#__PURE__*/__nccwpck_require__.n(external_path_);
+// EXTERNAL MODULE: external "os"
+var external_os_ = __nccwpck_require__(2037);
+;// CONCATENATED MODULE: external "readline"
+const external_readline_namespaceObject = require("readline");
+// EXTERNAL MODULE: ./node_modules/@actions/exec/lib/exec.js
+var exec = __nccwpck_require__(1514);
+// EXTERNAL MODULE: ./node_modules/@actions/glob/lib/internal-pattern-helper.js
+var internal_pattern_helper = __nccwpck_require__(9005);
+// EXTERNAL MODULE: ./node_modules/@actions/glob/lib/internal-pattern.js
+var internal_pattern = __nccwpck_require__(4536);
+// EXTERNAL MODULE: ./node_modules/uuid/dist/index.js
+var dist = __nccwpck_require__(5840);
+;// CONCATENATED MODULE: ./node_modules/uuid/wrapper.mjs
+
+const v1 = dist.v1;
+const v3 = dist.v3;
+const v4 = dist.v4;
+const v5 = dist.v5;
+const NIL = dist/* NIL */.zR;
+const version = dist/* version */.i8;
+const validate = dist/* validate */.Gu;
+const stringify = dist/* stringify */.Pz;
+const parse = dist/* parse */.Qc;
+
+;// CONCATENATED MODULE: ./lib/utils.js
+/* global AsyncIterableIterator */
+
+
+
+
+
+
+
+
+
+/**
+ * Converts windows path `\` to `/`
+ */
+function normalizeSeparators(filePath) {
+    const IS_WINDOWS = process.platform === 'win32';
+    filePath = filePath || '';
+    // Windows
+    if (IS_WINDOWS) {
+        // Convert slashes on Windows
+        filePath = filePath.replace(/\\/g, '/');
+    }
+    return filePath;
+}
+/**
+ * Retrieve all deleted files
+ */
+async function deletedGitFiles({ baseSha, sha, cwd, diff }) {
+    const { exitCode: topDirExitCode, stdout: topDirStdout, stderr: topDirStderr } = await exec.getExecOutput('git', ['rev-parse', '--show-toplevel'], {
+        cwd
+    });
+    /* istanbul ignore if */
+    if (topDirStderr || topDirExitCode !== 0) {
+        throw new Error(topDirStderr || 'An unexpected error occurred');
+    }
+    const topLevelDir = topDirStdout.trim();
+    core.debug(`top level directory: ${topLevelDir}`);
+    const { exitCode, stdout, stderr } = await exec.getExecOutput('git', ['diff', '--diff-filter=D', '--name-only', `${baseSha}${diff}${sha}`], { cwd });
+    core.debug(`git diff exited with: ${exitCode}`);
+    /* istanbul ignore if */
+    if (exitCode !== 0) {
+        throw new Error(stderr || 'An unexpected error occurred');
+    }
+    else if (stderr) {
+        /* istanbul ignore next */
+        core.warning(stderr);
+    }
+    const deletedFiles = stdout
+        .split('\n')
+        .map(p => p.trim())
+        .filter(p => p !== '')
+        .map(p => external_path_default().join(topLevelDir, p));
+    core.debug(`deleted files: ${deletedFiles.join('\n')}`);
+    return deletedFiles;
+}
+async function getPatterns(filePatterns) {
+    const IS_WINDOWS = process.platform === 'win32';
+    const patterns = [];
+    if (IS_WINDOWS) {
+        filePatterns = filePatterns.replace(/\r\n/g, '\n');
+        filePatterns = filePatterns.replace(/\r/g, '\n');
+    }
+    const lines = filePatterns.split('\n').map(filePattern => filePattern.trim());
+    for (let line of lines) {
+        // Empty or comment
+        if (!(!line || line.startsWith('#'))) {
+            line = IS_WINDOWS ? line.replace(/\\/g, '/') : line;
+            const pattern = new internal_pattern.Pattern(line);
+            // @ts-expect-error
+            pattern.minimatch.options.nobrace = false;
+            // @ts-expect-error
+            pattern.minimatch.make();
+            patterns.push(pattern);
+            if (pattern.trailingSeparator ||
+                pattern.segments[pattern.segments.length - 1] !== '**') {
+                patterns.push(new internal_pattern.Pattern(pattern.negate, true, pattern.segments.concat('**')));
+            }
+        }
+    }
+    return patterns;
+}
+async function getDeletedFiles({ filePatterns, baseSha, sha, cwd, diff }) {
+    const patterns = await getPatterns(filePatterns);
+    const deletedFiles = [];
+    for (const filePath of await deletedGitFiles({ baseSha, sha, cwd, diff })) {
+        const match = internal_pattern_helper.match(patterns, filePath);
+        if (match) {
+            deletedFiles.push(filePath);
+        }
+    }
+    return deletedFiles;
+}
+/**
+ * Generator for retrieving all file contents
+ */
+async function* lineOfFileGenerator({ filePath, excludedFiles }) {
+    const fileStream = (0,external_fs_.createReadStream)(filePath);
+    /* istanbul ignore next */
+    fileStream.on('error', error => {
+        throw error;
+    });
+    const rl = (0,external_readline_namespaceObject.createInterface)({
+        input: fileStream,
+        crlfDelay: Infinity
+    });
+    for await (let line of rl) {
+        if (!line.startsWith('#') && line !== '') {
+            if (excludedFiles) {
+                line = line.startsWith('!') ? line : `!${line}`;
+                if (line.endsWith((external_path_default()).sep)) {
+                    line = `${line}**`;
+                }
+                yield line;
+            }
+            else {
+                line = line.endsWith((external_path_default()).sep) ? `${line}**` : line;
+                yield line;
+            }
+        }
+    }
+}
+async function getFilesFromSourceFile({ filePaths, excludedFiles = false }) {
+    const lines = [];
+    for (const filePath of filePaths) {
+        for await (const line of lineOfFileGenerator({ filePath, excludedFiles })) {
+            lines.push(line);
+        }
+    }
+    return lines;
+}
+async function getFilesFromEsLintConfig({ eslintConfigPath, excludedFiles = false }) {
+    core.debug(`eslint config path: ${eslintConfigPath}`);
+    // Dynamically import the eslint config file using the provided path
+    const { default: eslintConfig } = await __nccwpck_require__(7773)(eslintConfigPath);
+    // Access the default export, which should be an array of configuration objects
+    const fileNames = [];
+    for (const config of eslintConfig) {
+        if (excludedFiles) {
+            fileNames.push(...config.ignores.map((ignoredFile) => `!${ignoredFile}`));
+        }
+        else {
+            fileNames.push(...config.files);
+        }
+    }
+    return fileNames;
+}
+async function tempfile(extension = '') {
+    const tempDirectory = await external_fs_.promises.realpath((0,external_os_.tmpdir)());
+    return external_path_default().join(tempDirectory, `${v4()}${extension}`);
+}
+/**
+ * Escapes special characters in a string for the bash shell.
+ *
+ * @param value - The string to be escaped.
+ * @returns The escaped string.
+ */
+function escapeString(value) {
+    // escape special characters for bash shell
+    return value.replace(/[^\x20-\x7E]|[:*?<>|;`$()&!]|\[|]/g, '\\$&');
+}
+async function exists(filePath) {
+    try {
+        await external_fs_.promises.access(filePath);
+        return true;
+    }
+    catch {
+        return false;
+    }
+}
+
+;// CONCATENATED MODULE: ./lib/main.js
+
+
+
+
+
+const DEFAULT_EXCLUDED_FILES = [
+    '!.git/**',
+    '!**/node_modules/**',
+    '!node_modules/**'
+];
+async function run() {
+    const files = core.getInput('files', { required: false });
+    const filesSeparator = core.getInput('files-separator', {
+        required: false,
+        trimWhitespace: false
+    });
+    const excludedFiles = core.getInput('excluded-files', { required: false });
+    const excludedFilesSeparator = core.getInput('excluded-files-separator', {
+        required: false,
+        trimWhitespace: false
+    });
+    const filesFromSourceFile = core.getInput('files-from-source-file', {
+        required: false
+    });
+    const filesFromSourceFileSeparator = core.getInput('files-from-source-file-separator', { required: false, trimWhitespace: false });
+    const filesFromESLintConfig = core.getInput('files-from-eslint-config', {
+        required: false
+    });
+    const excludedFilesFromSourceFile = core.getInput('excluded-files-from-source-file', { required: false });
+    const excludedFilesFromSourceFileSeparator = core.getInput('excluded-files-from-source-file-separator', { required: false, trimWhitespace: false });
+    const excludedFilesFromESLintConfig = core.getInput('excluded-files-from-eslint-config', { required: false });
+    const followSymbolicLinks = core.getBooleanInput('follow-symbolic-links', {
+        required: false
+    });
+    const matchDirectories = core.getBooleanInput('match-directories', {
+        required: false
+    });
+    const matchGitignoreFiles = core.getBooleanInput('match-gitignore-files', {
+        required: true
+    });
+    const separator = core.getInput('separator', {
+        required: true,
+        trimWhitespace: false
+    });
+    const diff = core.getInput('diff', { required: false });
+    const escapePaths = core.getBooleanInput('escape-paths', { required: false });
+    const stripTopLevelDir = core.getBooleanInput('strip-top-level-dir', {
+        required: true
+    });
+    const includeDeletedFiles = core.getBooleanInput('include-deleted-files', {
+        required: true
+    });
+    const baseRef = core.getInput('base-ref', { required: false });
+    const headRepoFork = core.getInput('head-repo-fork', { required: false }) === 'true';
+    const sha = core.getInput('sha', { required: includeDeletedFiles });
+    const baseSha = core.getInput('base-sha', { required: includeDeletedFiles });
+    const workingDirectory = external_path_.resolve(process.env.GITHUB_WORKSPACE ?? process.cwd(), core.getInput('working-directory', { required: true }));
+    const gitignorePath = external_path_.join(workingDirectory, '.gitignore');
+    let filePatterns = files
+        .split(filesSeparator)
+        .filter(Boolean)
+        .map(p => (p.endsWith(external_path_.sep) ? `${p}**` : p))
+        .join('\n');
+    core.debug(`file patterns: ${filePatterns}`);
+    let diffType = diff;
+    if (!diffType) {
+        diffType = !baseRef || headRepoFork ? '..' : '...';
+    }
+    if (excludedFiles !== '') {
+        const excludedFilePatterns = excludedFiles
+            .split(excludedFilesSeparator)
+            .filter(Boolean)
+            .map(p => {
+            p = p.startsWith('!') ? p : `!${p}`;
+            if (p.endsWith(external_path_.sep)) {
+                p = `${p}**`;
+            }
+            return p;
+        })
+            .join('\n');
+        core.debug(`excluded file patterns: ${excludedFilePatterns}`);
+        if (!files) {
+            filePatterns += `\n**\n${excludedFilePatterns}`;
+        }
+        else {
+            filePatterns += `\n${excludedFilePatterns}`;
+        }
+    }
+    if (filesFromSourceFile !== '') {
+        const inputFilesFromSourceFile = filesFromSourceFile
+            .split(filesFromSourceFileSeparator)
+            .filter(p => p !== '')
+            .map(p => external_path_.join(workingDirectory, p));
+        const filesFromSourceFiles = (await getFilesFromSourceFile({ filePaths: inputFilesFromSourceFile })).join('\n');
+        core.debug(`files from source files patterns: ${filesFromSourceFiles}`);
+        filePatterns += `\n${filesFromSourceFiles}`;
+    }
+    if (filesFromESLintConfig !== '') {
+        const filesFromESLintConfigFile = (await getFilesFromEsLintConfig({
+            eslintConfigPath: external_path_.join(workingDirectory, filesFromESLintConfig)
+        })).join('\n');
+        core.debug(`files from ESLint config patterns: ${filesFromESLintConfigFile}`);
+        filePatterns += `\n${filesFromESLintConfigFile}`;
+    }
+    if (excludedFilesFromSourceFile !== '') {
+        const inputExcludedFilesFromSourceFile = excludedFilesFromSourceFile
+            .split(excludedFilesFromSourceFileSeparator)
+            .filter(p => p !== '')
+            .map(p => external_path_.join(workingDirectory, p));
+        const excludedFilesFromSourceFiles = (await getFilesFromSourceFile({
+            filePaths: inputExcludedFilesFromSourceFile,
+            excludedFiles: true
+        })).join('\n');
+        core.debug(`excluded files from source files patterns: ${excludedFilesFromSourceFiles}`);
+        if (!files && !filesFromSourceFile) {
+            filePatterns += `\n**\n${excludedFilesFromSourceFiles}`;
+        }
+        else {
+            filePatterns += `\n${excludedFilesFromSourceFiles}`;
+        }
+    }
+    if (excludedFilesFromESLintConfig !== '') {
+        const excludedFilesFromESLintConfigFile = (await getFilesFromEsLintConfig({
+            eslintConfigPath: external_path_.join(workingDirectory, excludedFilesFromESLintConfig),
+            excludedFiles: true
+        })).join('\n');
+        core.debug(`excluded files from ESLint config patterns: ${excludedFilesFromESLintConfigFile}`);
+        if (!files && !filesFromSourceFile && !excludedFilesFromSourceFile) {
+            filePatterns += `\n**\n${excludedFilesFromESLintConfigFile}`;
+        }
+        else {
+            filePatterns += `\n${excludedFilesFromESLintConfigFile}`;
+        }
+    }
+    filePatterns += `\n${DEFAULT_EXCLUDED_FILES.join('\n')}`;
+    filePatterns = [...new Set(filePatterns.split('\n').filter(p => p !== ''))]
+        .map(pt => {
+        const parts = pt.split(external_path_.sep);
+        let absolutePath;
+        let isExcluded = false;
+        if (parts[0].startsWith('!')) {
+            absolutePath = external_path_.resolve(external_path_.join(workingDirectory, parts[0].slice(1)));
+            isExcluded = true;
+        }
+        else {
+            absolutePath = external_path_.resolve(external_path_.join(workingDirectory, parts[0]));
+        }
+        const p = external_path_.join(absolutePath, ...parts.slice(1));
+        return isExcluded ? `!${p}` : p;
+    })
+        .join('\n');
+    let allInclusive = false;
+    if (filePatterns.split('\n').filter(p => !p.startsWith('!')).length === 0) {
+        allInclusive = true;
+        filePatterns = `**\n${filePatterns}`;
+    }
+    core.debug(`file patterns: ${filePatterns}`);
+    const globOptions = {
+        followSymbolicLinks,
+        matchDirectories
+    };
+    const globber = await glob.create(filePatterns, globOptions);
+    // @ts-expect-error
+    globber.patterns.map(pattern => {
+        pattern.minimatch.options.nobrace = false;
+        pattern.minimatch.make();
+        return pattern;
+    });
+    let paths = new Set(await globber.glob());
+    if (await exists(gitignorePath)) {
+        const gitignoreFilePatterns = (await getFilesFromSourceFile({
+            filePaths: [gitignorePath]
+        }))
+            .concat(DEFAULT_EXCLUDED_FILES)
+            .filter(p => !!p)
+            .map(pt => {
+            const negated = pt.startsWith('!');
+            const parts = pt.replace(/^!/, '').split(external_path_.sep);
+            const absolutePath = external_path_.resolve(external_path_.join(workingDirectory, parts[0]));
+            return `${negated ? '!' : ''}${external_path_.join(absolutePath, ...parts.slice(1))}`;
+        })
+            .join('\n');
+        core.debug(`gitignore file patterns: ${gitignoreFilePatterns}`);
+        const gitIgnoreGlobber = await glob.create(gitignoreFilePatterns, globOptions);
+        const gitignoreMatchingFiles = new Set(await gitIgnoreGlobber.glob());
+        if (allInclusive || !matchGitignoreFiles) {
+            paths = new Set([...paths].filter(p => !gitignoreMatchingFiles.has(p)));
+        }
+        else if (matchGitignoreFiles) {
+            const excludedPaths = new Set([...gitignoreMatchingFiles].filter(gp => !paths.has(gp)));
+            paths = new Set([...paths].filter(p => !excludedPaths.has(p)));
+        }
+    }
+    if (includeDeletedFiles) {
+        paths = new Set([
+            ...paths,
+            ...(await getDeletedFiles({
+                filePatterns,
+                baseSha,
+                sha,
+                cwd: workingDirectory,
+                diff: diffType
+            }))
+        ]);
+    }
+    if (stripTopLevelDir) {
+        paths = new Set([...paths]
+            .map((p) => normalizeSeparators(p
+            .replace(workingDirectory + external_path_.sep, '')
+            .replace(workingDirectory, '')))
+            .filter((p) => !!p));
+    }
+    if (escapePaths) {
+        paths = new Set([...paths].map(p => escapeString(p)));
+    }
+    const pathsOutput = [...paths].join(separator);
+    const hasCustomPatterns = files !== '' ||
+        filesFromSourceFile !== '' ||
+        excludedFiles !== '' ||
+        excludedFilesFromSourceFile !== '';
+    if (!pathsOutput && hasCustomPatterns) {
+        core.warning('No paths found using the specified patterns');
+    }
+    const pathsOutputFile = await tempfile('.txt');
+    await external_fs_.promises.writeFile(pathsOutputFile, pathsOutput, { flag: 'w' });
+    core.setOutput('paths-output-file', pathsOutputFile);
+    core.saveState('paths-output-file', pathsOutputFile);
+    core.info(`Successfully created paths-output-file: ${pathsOutputFile}`);
+    core.setOutput('paths', pathsOutput);
+    core.setOutput('has-custom-patterns', hasCustomPatterns);
+}
+/* istanbul ignore if */
+if (!process.env.TESTING) {
+    run().catch((e) => {
+        core.setFailed(e.message ?? e);
+    });
+}
+
+})();
+
+module.exports = __webpack_exports__;
 /******/ })()
 ;
 //# sourceMappingURL=index.js.map
